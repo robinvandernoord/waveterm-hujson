@@ -970,11 +970,13 @@ function CodeEditPreview({ model }: SpecializedViewProps) {
 
 		if (isWavetermConfig) {
 			// only enable these options for wave's own config files (which uses hujson now)
-			monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-				validate: true,
-				allowComments: true,
-				trailingCommas: 'ignore',
-			});
+			monaco.languages.json.jsonDefaults.setDiagnosticsOptions(Object.assign(
+				monaco.languages.json.jsonDefaults.diagnosticsOptions,
+				{
+					allowComments: true,
+					trailingCommas: 'ignore',
+				}
+			));
 		}
 
         editor.onKeyDown((e: MonacoTypes.IKeyboardEvent) => {
