@@ -28,6 +28,7 @@ require (
 	github.com/skeema/knownhosts v1.3.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.8.1
+	github.com/tailscale/hujson v0.0.0-20241010212012-29efb4a0184b
 	github.com/ubuntu/gowsl v0.0.0-20240906163211-049fd49bd93b
 	github.com/wavetermdev/htmltoken v0.2.0
 	golang.org/x/crypto v0.32.0

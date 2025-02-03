@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tailscale/hujson"
 	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
 	"github.com/wavetermdev/waveterm/pkg/wavebase"
 	"github.com/wavetermdev/waveterm/pkg/waveobj"
@@ -218,6 +219,13 @@ func readConfigHelper(fileName string, barr []byte, readErr error) (waveobj.Meta
 		return nil, cerrs
 	}
 	var rtn waveobj.MetaMapType
+
+	barr, hu_err := hujson.Standardize(barr)
+
+	if hu_err != nil {
+		cerrs = append(cerrs, ConfigError{File: fileName, Err: hu_err.Error()})
+	}
+
 	err := json.Unmarshal(barr, &rtn)
 	if err != nil {
 		if syntaxErr, ok := err.(*json.SyntaxError); ok {
@@ -226,12 +234,8 @@ func readConfigHelper(fileName string, barr []byte, readErr error) (waveobj.Meta
 				offset = offset - 1
 			}
 			lineNum, colNum := utilfn.GetLineColFromOffset(barr, int(offset))
-			isTrailingComma := isTrailingCommaError(barr, int(offset))
-			if isTrailingComma {
-				err = fmt.Errorf("json syntax error at line %d, col %d: probably an extra trailing comma: %v", lineNum, colNum, syntaxErr)
-			} else {
-				err = fmt.Errorf("json syntax error at line %d, col %d: %v", lineNum, colNum, syntaxErr)
-			}
+			// isTrailingComma error doesn't exist anymore with json5
+			err = fmt.Errorf("json syntax error at line %d, col %d: %v", lineNum, colNum, syntaxErr)
 		}
 		cerrs = append(cerrs, ConfigError{File: fileName, Err: err.Error()})
 	}

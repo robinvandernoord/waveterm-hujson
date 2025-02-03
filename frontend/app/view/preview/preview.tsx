@@ -931,6 +931,9 @@ function StreamingPreview({ model }: SpecializedViewProps) {
 }
 
 function CodeEditPreview({ model }: SpecializedViewProps) {
+	const configDirAbs = getApi().getConfigDir()
+	const configDirRel = "~/.config/waveterm"
+
     const fileContent = useAtomValue(model.fileContent);
     const setNewFileContent = useSetAtom(model.newFileContent);
     const fileName = useAtomValue(model.statFilePath);
@@ -962,6 +965,17 @@ function CodeEditPreview({ model }: SpecializedViewProps) {
 
     function onMount(editor: MonacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco): () => void {
         model.monacoRef.current = editor;
+
+		const isWavetermConfig = blockMeta.file?.startsWith(configDirAbs) || blockMeta.file?.startsWith(configDirRel)
+
+		if (isWavetermConfig) {
+			// only enable these options for wave's own config files (which uses hujson now)
+			monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+				validate: true,
+				allowComments: true,
+				trailingCommas: 'ignore',
+			});
+		}
 
         editor.onKeyDown((e: MonacoTypes.IKeyboardEvent) => {
             const waveEvent = adaptFromReactOrNativeKeyEvent(e.browserEvent);
