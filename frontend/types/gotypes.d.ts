@@ -153,6 +153,8 @@ declare global {
         rtopts?: RuntimeOpts;
         magnified?: boolean;
         ephemeral?: boolean;
+        targetblockid?: string;
+        targetaction?: string;
     };
 
     // wshrpc.CommandCreateSubBlockData
@@ -200,13 +202,6 @@ declare global {
     type CommandMessageData = {
         oref: ORef;
         message: string;
-    };
-
-    // wshrpc.CommandRemoteFileCopyData
-    type CommandRemoteFileCopyData = {
-        srcuri: string;
-        desturi: string;
-        opts?: FileCopyOpts;
     };
 
     // wshrpc.CommandRemoteListEntriesData
@@ -372,6 +367,23 @@ declare global {
         height: number;
     };
 
+    // wshrpc.FetchSuggestionsData
+    type FetchSuggestionsData = {
+        suggestiontype: string;
+        query: string;
+        widgetid: string;
+        reqnum: number;
+        "file:cwd"?: string;
+        "file:dironly"?: boolean;
+        "file:connection"?: string;
+    };
+
+    // wshrpc.FetchSuggestionsResponse
+    type FetchSuggestionsResponse = {
+        reqnum: number;
+        suggestions: SuggestionType[];
+    };
+
     // wshrpc.FileCopyOpts
     type FileCopyOpts = {
         overwrite?: boolean;
@@ -441,6 +453,12 @@ declare global {
         append?: boolean;
     };
 
+    // wshrpc.FileShareCapability
+    type FileShareCapability = {
+        canappend: boolean;
+        canmkdir: boolean;
+    };
+
     // wconfig.FullConfigType
     type FullConfigType = {
         settings: SettingsType;
@@ -450,6 +468,7 @@ declare global {
         presets: {[key: string]: MetaType};
         termthemes: {[key: string]: TermThemeType};
         connections: {[key: string]: ConnKeywords};
+        bookmarks: {[key: string]: WebBookmark};
         configerrors: ConfigError[];
     };
 
@@ -462,6 +481,8 @@ declare global {
         focused: boolean;
         magnified: boolean;
         ephemeral: boolean;
+        targetblockid?: string;
+        position?: string;
     };
 
     // waveobj.LayoutState
@@ -563,6 +584,7 @@ declare global {
         "term:conndebug"?: string;
         "web:zoom"?: number;
         "web:hidenav"?: boolean;
+        "web:partition"?: string;
         "markdown:fontsize"?: number;
         "markdown:fixedfontsize"?: number;
         "vdom:*"?: boolean;
@@ -658,6 +680,7 @@ declare global {
         "app:*"?: boolean;
         "app:globalhotkey"?: string;
         "app:dismissarchitecturewarning"?: boolean;
+        "app:defaultnewblock"?: string;
         "ai:*"?: boolean;
         "ai:preset"?: string;
         "ai:apitype"?: string;
@@ -757,6 +780,24 @@ declare global {
         allscopes?: boolean;
     };
 
+    // wshrpc.SuggestionType
+    type SuggestionType = {
+        type: string;
+        suggestionid: string;
+        display: string;
+        subtext?: string;
+        icon?: string;
+        iconcolor?: string;
+        iconsrc?: string;
+        matchpos?: number[];
+        submatchpos?: number[];
+        score?: number;
+        "file:mimetype"?: string;
+        "file:path"?: string;
+        "file:name"?: string;
+        "url:url"?: string;
+    };
+
     // telemetrydata.TEvent
     type TEvent = {
         uuid?: string;
@@ -768,6 +809,16 @@ declare global {
 
     // telemetrydata.TEventProps
     type TEventProps = {
+        "client:arch"?: string;
+        "client:version"?: string;
+        "client:initial_version"?: string;
+        "client:buildtime"?: string;
+        "client:osrelease"?: string;
+        "client:isdev"?: boolean;
+        "autoupdate:channel"?: string;
+        "autoupdate:enabled"?: boolean;
+        "loc:countrycode"?: string;
+        "loc:regioncode"?: string;
         "activity:activeminutes"?: number;
         "activity:fgminutes"?: number;
         "activity:openminutes"?: number;
@@ -1248,6 +1299,16 @@ declare global {
         pos: Point;
         winsize: WinSize;
         lastfocusts: number;
+    };
+
+    // wconfig.WebBookmark
+    type WebBookmark = {
+        url: string;
+        title?: string;
+        icon?: string;
+        iconcolor?: string;
+        iconurl?: string;
+        "display:order"?: number;
     };
 
     // service.WebCallType

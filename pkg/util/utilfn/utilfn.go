@@ -13,7 +13,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"io"
+	"log"
 	"math"
 	mathrand "math/rand"
 	"os"
@@ -1015,4 +1017,60 @@ func ConvertToWallClockPT(t time.Time) time.Time {
 	hour, min, sec := t.Clock()
 	pstTime := time.Date(year, month, day, hour, min, sec, 0, PTLoc)
 	return pstTime
+}
+
+func QuickHashString(s string) string {
+	h := fnv.New64a()
+	h.Write([]byte(s))
+	return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+}
+
+func SendWithCtxCheck[T any](ctx context.Context, ch chan<- T, val T) bool {
+	select {
+	case <-ctx.Done():
+		return false
+	case ch <- val:
+		return true
+	}
+}
+
+const (
+	maxRetries = 5
+	retryDelay = 10 * time.Millisecond
+)
+
+func GracefulClose(closer io.Closer, debugName, closerName string) bool {
+	closed := false
+	for retries := 0; retries < maxRetries; retries++ {
+		if err := closer.Close(); err != nil {
+			log.Printf("%s: error closing %s: %v, trying again in %dms\n", debugName, closerName, err, retryDelay.Milliseconds())
+			time.Sleep(retryDelay)
+			continue
+		}
+		closed = true
+		break
+	}
+	if !closed {
+		log.Printf("%s: unable to close %s after %d retries\n", debugName, closerName, maxRetries)
+	}
+	return closed
+}
+
+// DrainChannelSafe will drain a channel until it is empty or until a timeout is reached.
+// WARNING: This function will panic if the channel is not drained within the timeout.
+func DrainChannelSafe[T any](ch <-chan T, debugName string) {
+	drainTimeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	go func() {
+		defer cancel()
+		for {
+			select {
+			case <-drainTimeoutCtx.Done():
+				panic(debugName + ": timeout draining channel")
+			case _, ok := <-ch:
+				if !ok {
+					return
+				}
+			}
+		}
+	}()
 }

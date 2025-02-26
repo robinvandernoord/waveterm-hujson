@@ -15,6 +15,10 @@ const docsiteWebUrl = "https://docs.waveterm.dev/";
 const baseUrlRegex = /http[s]?:\/\/([^:\/])+(:\d+)?/;
 
 class HelpViewModel extends WebViewModel {
+    get viewComponent(): ViewComponent {
+        return HelpView;
+    }
+
     constructor(blockId: string, nodeModel: BlockNodeModel) {
         super(blockId, nodeModel);
         this.viewText = atom((get) => {
@@ -137,11 +141,8 @@ class HelpViewModel extends WebViewModel {
     }
 }
 
-function makeHelpViewModel(blockId: string, nodeModel: BlockNodeModel) {
-    return new HelpViewModel(blockId, nodeModel);
-}
-
-function HelpView({ model }: { model: HelpViewModel }) {
+function HelpView(props: ViewComponentProps<HelpViewModel>) {
+    const model = props.model;
     const homepageUrl = useAtomValue(model.homepageUrl);
 
     // Effect to update the docsite base url when the app restarts, since the webserver port is dynamic
@@ -166,9 +167,9 @@ function HelpView({ model }: { model: HelpViewModel }) {
     );
     return (
         <div className="help-view">
-            <WebView blockId={model.blockId} model={model} onFailLoad={onFailLoad} />
+            <WebView {...props} onFailLoad={onFailLoad} />
         </div>
     );
 }
 
-export { HelpView, HelpViewModel, makeHelpViewModel };
+export { HelpViewModel };

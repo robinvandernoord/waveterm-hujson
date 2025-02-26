@@ -19,6 +19,7 @@ import (
 )
 
 func FixPath(path string) (string, error) {
+	origPath := path
 	var err error
 	if strings.HasPrefix(path, "~") {
 		path = filepath.Join(wavebase.GetHomeDir(), path[1:])
@@ -27,6 +28,9 @@ func FixPath(path string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+	}
+	if strings.HasSuffix(origPath, "/") && !strings.HasSuffix(path, "/") {
+		path += "/"
 	}
 	return path, nil
 }
@@ -61,7 +65,6 @@ func WinSymlinkDir(path string, bits os.FileMode) bool {
 // does not return "application/octet-stream" as this is considered a detection failure
 // can pass an existing fileInfo to avoid re-statting the file
 // falls back to text/plain for 0 byte files
-
 func DetectMimeType(path string, fileInfo fs.FileInfo, extended bool) string {
 	if fileInfo == nil {
 		statRtn, err := os.Stat(path)
@@ -114,6 +117,39 @@ func DetectMimeType(path string, fileInfo fs.FileInfo, extended bool) string {
 		return ""
 	}
 	return rtn
+}
+
+func DetectMimeTypeWithDirEnt(path string, dirEnt fs.DirEntry) string {
+	if dirEnt != nil {
+		if dirEnt.IsDir() {
+			return "directory"
+		}
+		mode := dirEnt.Type()
+		if mode&os.ModeNamedPipe == os.ModeNamedPipe {
+			return "pipe"
+		}
+		charDevice := os.ModeDevice | os.ModeCharDevice
+		if mode&charDevice == charDevice {
+			return "character-special"
+		}
+		if mode&os.ModeDevice == os.ModeDevice {
+			return "block-special"
+		}
+	}
+	ext := filepath.Ext(path)
+	if mimeType, ok := StaticMimeTypeMap[ext]; ok {
+		return mimeType
+	}
+	return ""
+}
+
+func AddMimeTypeToFileInfo(path string, fileInfo *wshrpc.FileInfo) {
+	if fileInfo == nil {
+		return
+	}
+	if fileInfo.MimeType == "" {
+		fileInfo.MimeType = DetectMimeType(path, ToFsFileInfo(fileInfo), false)
+	}
 }
 
 var (
@@ -202,14 +238,14 @@ var _ fs.FileInfo = FsFileInfo{}
 // ToFsFileInfo converts wshrpc.FileInfo to FsFileInfo.
 // It panics if fi is nil.
 func ToFsFileInfo(fi *wshrpc.FileInfo) FsFileInfo {
-    if fi == nil {
-        panic("ToFsFileInfo: nil FileInfo")
-    }
-    return FsFileInfo{
-        NameInternal:    fi.Name,
-        ModeInternal:    fi.Mode,
-        SizeInternal:    fi.Size,
-        ModTimeInternal: fi.ModTime,
-        IsDirInternal:   fi.IsDir,
-    }
+	if fi == nil {
+		panic("ToFsFileInfo: nil FileInfo")
+	}
+	return FsFileInfo{
+		NameInternal:    fi.Name,
+		ModeInternal:    fi.Mode,
+		SizeInternal:    fi.Size,
+		ModTimeInternal: fi.ModTime,
+		IsDirInternal:   fi.IsDir,
+	}
 }

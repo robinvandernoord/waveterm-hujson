@@ -15,25 +15,48 @@ import (
 )
 
 const WaveSchemaSettingsFileName = "schema/settings.json"
+const WaveSchemaConnectionsFileName = "schema/connections.json"
+const WaveSchemaAiPresetsFileName = "schema/aipresets.json"
+const WaveSchemaWidgetsFileName = "schema/widgets.json"
 
-func main() {
-	settingsSchema := jsonschema.Reflect(&wconfig.SettingsType{})
+func generateSchema(template any, dir string) error {
+	settingsSchema := jsonschema.Reflect(template)
 
 	jsonSettingsSchema, err := json.MarshalIndent(settingsSchema, "", "  ")
 	if err != nil {
-		log.Fatalf("failed to parse local schema: %v", err)
+		return fmt.Errorf("failed to parse local schema: %w", err)
 	}
-	/*
-		err = os.MkdirAll(WaveSchemaSettingsFileName, 0755)
-		if err != nil {
-			log.Fatalf("failed to create schema dir: %v", err)
-		}
-	*/
-	written, err := utilfn.WriteFileIfDifferent(WaveSchemaSettingsFileName, jsonSettingsSchema)
+	written, err := utilfn.WriteFileIfDifferent(dir, jsonSettingsSchema)
 	if !written {
-		fmt.Fprintf(os.Stderr, "no changes to %s\n", WaveSchemaSettingsFileName)
+		fmt.Fprintf(os.Stderr, "no changes to %s\n", dir)
 	}
 	if err != nil {
-		log.Fatalf("failed to write local schema: %v", err)
+		return fmt.Errorf("failed to write local schema: %w", err)
+	}
+	return nil
+}
+
+func main() {
+	err := generateSchema(&wconfig.SettingsType{}, WaveSchemaSettingsFileName)
+	if err != nil {
+		log.Fatalf("settings schema error: %v", err)
+	}
+
+	connectionTemplate := make(map[string]wconfig.ConnKeywords)
+	err = generateSchema(&connectionTemplate, WaveSchemaConnectionsFileName)
+	if err != nil {
+		log.Fatalf("connections schema error: %v", err)
+	}
+
+	aiPresetsTemplate := make(map[string]wconfig.AiSettingsType)
+	err = generateSchema(&aiPresetsTemplate, WaveSchemaAiPresetsFileName)
+	if err != nil {
+		log.Fatalf("ai presets schema error: %v", err)
+	}
+
+	widgetsTemplate := make(map[string]wconfig.WidgetConfigType)
+	err = generateSchema(&widgetsTemplate, WaveSchemaWidgetsFileName)
+	if err != nil {
+		log.Fatalf("widgets schema error: %v", err)
 	}
 }
